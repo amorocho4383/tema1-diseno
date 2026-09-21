@@ -1,0 +1,36 @@
+@startuml
+title SQ02 - Gestionar solicitud de tutoría
+autonumber
+
+actor Docente
+participant "ServicioTutoria" as ST
+database "RepositorioTutoria" as Repo
+participant "Tutoría" as T
+participant "ServicioNotificacion" as Notif
+actor Estudiante
+
+Docente -> ST : obtenerPendientes()
+ST -> Repo : buscarPendientes(docente)
+Repo --> ST : solicitudes pendientes
+ST --> Docente : solicitudes pendientes
+
+Docente -> ST : seleccionar solicitud y decisión
+
+alt Aceptar solicitud
+  ST -> T : actualizarEstado(CONFIRMADA)
+  T --> ST : estado actualizado
+  ST -> Repo : guardar(tutoria)
+  Repo --> ST : cambio persistido
+  ST -> Notif : notificarCambio(tutoria, estudiante)
+  Notif --> Estudiante : tutoría CONFIRMADA
+  ST --> Docente : solicitud confirmada
+else Rechazar solicitud
+  ST -> T : actualizarEstado(RECHAZADA)
+  T --> ST : estado actualizado
+  ST -> Repo : guardar(tutoria)
+  Repo --> ST : cambio persistido
+  ST -> Notif : notificarCambio(tutoria, estudiante)
+  Notif --> Estudiante : tutoría RECHAZADA
+  ST --> Docente : solicitud rechazada
+end
+@enduml

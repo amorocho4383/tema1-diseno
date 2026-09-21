@@ -1,0 +1,95 @@
+@startuml
+title Sistema de Gestión de Tutorías Académicas\nDiagrama de clases principal
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+abstract class Usuario {
+  - id: int
+  - nombre: String
+  - correo: String
+  - clave: String
+  - rol: String
+}
+
+class Estudiante {
+  - codigoEstudiante: String
+}
+
+class Docente {
+  - codigoDocente: String
+}
+
+class Administrador {
+  - codigoAdministrador: String
+}
+
+class Disponibilidad {
+  - id: int
+  - fecha: Date
+  - horaInicio: Time
+  - horaFin: Time
+  - disponible: boolean
+}
+
+class Tutoria {
+  - id: int
+  - fecha: Date
+  - horaInicio: Time
+  - horaFin: Time
+  - motivo: String
+  - estado: EstadoTutoria
+  + actualizarEstado(estado: EstadoTutoria)
+}
+
+enum EstadoTutoria {
+  PENDIENTE
+  CONFIRMADA
+  RECHAZADA
+  CANCELADA
+  REALIZADA
+}
+
+class ServicioAutenticacion {
+  + autenticar(correo: String, clave: String): Usuario
+}
+
+class ServicioDisponibilidad {
+  + consultarDisponibilidad(docente: Docente): List<Disponibilidad>
+  + verificarConflicto(estudiante: Estudiante, docente: Docente, fecha: Date, horaInicio: Time, horaFin: Time): boolean
+}
+
+class ServicioTutoria {
+  + solicitarTutoria(estudiante: Estudiante, docente: Docente, fecha: Date, horaInicio: Time, horaFin: Time, motivo: String): Tutoria
+  + obtenerPendientes(docente: Docente): List<Tutoria>
+  + aceptarSolicitud(tutoria: Tutoria)
+  + rechazarSolicitud(tutoria: Tutoria)
+}
+
+class ServicioNotificacion {
+  + notificarCambio(tutoria: Tutoria, estudiante: Estudiante)
+}
+
+class RepositorioTutoria {
+  + guardar(tutoria: Tutoria)
+  + buscarPendientes(docente: Docente): List<Tutoria>
+  + existeConflicto(estudiante: Estudiante, docente: Docente, fecha: Date, horaInicio: Time, horaFin: Time): boolean
+}
+
+Usuario <|-- Estudiante
+Usuario <|-- Docente
+Usuario <|-- Administrador
+
+Docente "1" -- "0..*" Disponibilidad : registra >
+Estudiante "1" -- "0..*" Tutoria : solicita >
+Docente "1" -- "0..*" Tutoria : atiende >
+Tutoria --> EstadoTutoria
+
+ServicioAutenticacion ..> Usuario
+ServicioDisponibilidad ..> Disponibilidad
+ServicioDisponibilidad ..> RepositorioTutoria
+ServicioTutoria ..> Tutoria
+ServicioTutoria ..> RepositorioTutoria
+ServicioTutoria ..> ServicioDisponibilidad
+ServicioTutoria ..> ServicioNotificacion
+ServicioNotificacion ..> Estudiante
+@enduml

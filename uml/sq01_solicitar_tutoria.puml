@@ -1,0 +1,32 @@
+@startuml
+title SQ01 - Consultar disponibilidad y solicitar tutoría
+autonumber
+
+actor Estudiante
+participant "ServicioAutenticacion" as Auth
+participant "ServicioDisponibilidad" as Disp
+participant "ServicioTutoria" as ST
+database "RepositorioTutoria" as Repo
+
+Estudiante -> Auth : autenticar(correo, clave)
+Auth --> Estudiante : usuario autenticado / rol
+
+Estudiante -> Disp : consultarDisponibilidad(docente)
+Disp --> Estudiante : horarios disponibles
+
+Estudiante -> ST : solicitarTutoria(docente, fecha,\nhoraInicio, horaFin, motivo)
+ST -> Disp : verificarConflicto(estudiante, docente,\nfecha, horaInicio, horaFin)
+Disp -> Repo : existeConflicto(estudiante, docente,\nfecha, horaInicio, horaFin)
+Repo --> Disp : resultado
+Disp --> ST : existeConflicto
+
+alt No existe conflicto
+  create "Tutoría" as T
+  ST -> T : crear en estado PENDIENTE
+  ST -> Repo : guardar(tutoria)
+  Repo --> ST : registro confirmado
+  ST --> Estudiante : solicitud creada (PENDIENTE)
+else Existe conflicto
+  ST --> Estudiante : rechazar operación\nInformar conflicto de horario
+end
+@enduml
